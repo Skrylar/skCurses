@@ -34,6 +34,9 @@
 
 # $Id: curses.h.in,v 1.220 2011/01/22 19:47:20 tom Exp $
 
+# I don't want to be prodded about line length for this module
+{.push hints: off.}
+
 import unsigned
 
 type
@@ -1702,4 +1705,6 @@ const
 ##endif /* __NCURSES_H */
 #
 # }}}
+
+{.pop.}
 
