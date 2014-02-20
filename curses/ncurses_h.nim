@@ -34,6 +34,12 @@
 
 # $Id: curses.h.in,v 1.220 2011/01/22 19:47:20 tom Exp $
 
+import unsigned
+
+type
+  Pcushort = ptr cushort
+  Pcshort = ptr cshort
+
 const
   # These are defined only in curses.h, and are used for conditional compiles
   VersionMajor* = 5
@@ -98,6 +104,7 @@ type
   #typedef unsigned chtype;
   #typedef unsigned mmask_t;
   #else
+  PChtype* = ptr TChtype
   TChtype* = culong
   TMMask*  = culong
   #endif
@@ -160,29 +167,29 @@ type
 
   # }}}
 
-  # X/Open attributes.  In the ncurses implementation, they are identical to the
-  # A_ attributes.
+# X/Open attributes.  In the ncurses implementation, they are identical to the
+# A_ attributes.
+
+# TODO: These are actually defined later in the file...
+template WA_ATTRIBUTES * () = A_ATTRIBUTES
+template WA_NORMAL     * () = A_NORMAL
+template WA_STANDOUT   * () = A_STANDOUT
+template WA_UNDERLINE  * () = A_UNDERLINE
+template WA_REVERSE    * () = A_REVERSE
+template WA_BLINK      * () = A_BLINK
+template WA_DIM        * () = A_DIM
+template WA_BOLD       * () = A_BOLD
+template WA_ALTCHARSET * () = A_ALTCHARSET
+template WA_INVIS      * () = A_INVIS
+template WA_PROTECT    * () = A_PROTECT
+template WA_HORIZONTAL * () = A_HORIZONTAL
+template WA_LEFT       * () = A_LEFT
+template WA_LOW        * () = A_LOW
+template WA_RIGHT      * () = A_RIGHT
+template WA_TOP        * () = A_TOP
+template WA_VERTICAL   * () = A_VERTICAL
 
 const
-  # TODO: These are actually defined later in the file...
-  WA_ATTRIBUTES * = A_ATTRIBUTES
-  WA_NORMAL     * = A_NORMAL
-  WA_STANDOUT   * = A_STANDOUT
-  WA_UNDERLINE  * = A_UNDERLINE
-  WA_REVERSE    * = A_REVERSE
-  WA_BLINK      * = A_BLINK
-  WA_DIM        * = A_DIM
-  WA_BOLD       * = A_BOLD
-  WA_ALTCHARSET * = A_ALTCHARSET
-  WA_INVIS      * = A_INVIS
-  WA_PROTECT    * = A_PROTECT
-  WA_HORIZONTAL * = A_HORIZONTAL
-  WA_LEFT       * = A_LEFT
-  WA_LOW        * = A_LOW
-  WA_RIGHT      * = A_RIGHT
-  WA_TOP        * = A_TOP
-  WA_VERTICAL   * = A_VERTICAL
-
   # colors
   COLOR_BLACK   * = 0
   COLOR_RED     * = 1
@@ -199,7 +206,7 @@ const
 #NCURSES_WRAPPED_VAR(chtype*, acs_map);
 #define acs_map NCURSES_PUBLIC_VAR(acs_map())
 #else
-var AcsMap*: TChtype[] {.nodecl, exportc 'acs_map'.}
+var AcsMap* {.nodecl, exportc: "acs_map".}: array[0..10000, TChtype]
 #endif
 
 template Acs*(c: cuchar) =
@@ -298,29 +305,30 @@ const
   OK  * = (0)
 
   # values for the _flags member
-  _SUBWIN    * = 0x01 # is this a sub-window?
-  _ENDLINE   * = 0x02 # is the window flush right?
-  _FULLWIN   * = 0x04 # is the window full-screen?
-  _SCROLLWIN * = 0x08 # bottom edge is at screen bottom?
-  _ISPAD     * = 0x10 # is this window a pad?
-  _HASMOVED  * = 0x20 # has cursor moved since last refresh?
-  _WRAPPED   * = 0x40 # cursor was just wrappped
+  #_SUBWIN    * = 0x01 # is this a sub-window?
+  #_ENDLINE   * = 0x02 # is the window flush right?
+  #_FULLWIN   * = 0x04 # is the window full-screen?
+  #_SCROLLWIN * = 0x08 # bottom edge is at screen bottom?
+  #_ISPAD     * = 0x10 # is this window a pad?
+  #_HASMOVED  * = 0x20 # has cursor moved since last refresh?
+  #_WRAPPED   * = 0x40 # cursor was just wrappped
 
-  # this value is used in the firstchar and lastchar fields to mark
-  # unchanged lines
-  _NOCHANGE* = -1
+  ## this value is used in the firstchar and lastchar fields to mark
+  ## unchanged lines
+  #_NOCHANGE* = -1
 
-  # this value is used in the oldindex field to mark lines created by insertions
-  # and scrolls.
-  _NEWINDEX* = -1
+  ## this value is used in the oldindex field to mark lines created by insertions
+  ## and scrolls.
+  #_NEWINDEX* = -1
 
 type
-  PScreen* = ptr TScreen
-  TScreen* = object {.nodecl, importc: 'struct screen'.}
-  PWindow* = ptr PWindow
-  TWindow* = object {.nodecl, importc: 'struct _win_st'.}
+  #TScreen* = object {.nodecl, importc: "struct screen".}
+  #TWindow* = object {.nodecl, importc: "struct _win_st".}
+  PScreen* {.importc: "SCREEN *".} = distinct pointer
+  PWindow* {.importc: "WINDOW *".} = distinct pointer
 
   TAttr* = TChtype
+  PAttr* = ptr TAttr
 
 #ifdef NCURSES_WIDECHAR {{{
 
@@ -436,48 +444,47 @@ type
 #  define NCURSES_EVENT_VERSION	1
 #endif	/* !defined(__BEOS__) */
 
-const
-  # Bits to set in _nc_event.data.flags
-  _NC_EVENT_TIMEOUT_MSEC  * = 1
-  _NC_EVENT_FILE          * = 2
-  _NC_EVENT_FILE_READABLE * = 2
+# Bits to set in _nc_event.data.flags
+#_NC_EVENT_TIMEOUT_MSEC  * = 1
+#_NC_EVENT_FILE          * = 2
+#_NC_EVENT_FILE_READABLE * = 2
 
-  #  if 0 /* Not supported yet... */
-  #    define _NC_EVENT_FILE_WRITABLE	4
-  #    define _NC_EVENT_FILE_EXCEPTION	8
-  #  endif
+#  if 0 /* Not supported yet... */
+#    define _NC_EVENT_FILE_WRITABLE	4
+#    define _NC_EVENT_FILE_EXCEPTION	8
+#  endif
 
-  # TODO {{{
+# TODO {{{
 
-  #typedef struct
-  #{
-  #    int type;
-  #    union
-  #    {
-  #	long timeout_msec;	/* _NC_EVENT_TIMEOUT_MSEC */
-  #	struct
-  #	{
-  #	    unsigned int flags;
-  #	    int fd;
-  #	    unsigned int result;
-  #	} fev;				/* _NC_EVENT_FILE */
-  #    } data;
-  #} _nc_event;
-  #
-  #typedef struct
-  #{
-  #    int count;
-  #    int result_flags;	/* _NC_EVENT_TIMEOUT_MSEC or _NC_EVENT_FILE_READABLE */
-  #    _nc_event *events[1];
-  #} _nc_eventlist;
-  #
-  #extern NCURSES_EXPORT(int) wgetch_events (WINDOW *, _nc_eventlist *);	/* experimental */
-  #extern NCURSES_EXPORT(int) wgetnstr_events (WINDOW *,char *,int,_nc_eventlist *);/* experimental */
-  #
-  ##endif /* NCURSES_WGETCH_EVENTS */
-  ##endif /* NCURSES_EXT_FUNCS */
+#typedef struct
+#{
+#    int type;
+#    union
+#    {
+#	long timeout_msec;	/* _NC_EVENT_TIMEOUT_MSEC */
+#	struct
+#	{
+#	    unsigned int flags;
+#	    int fd;
+#	    unsigned int result;
+#	} fev;				/* _NC_EVENT_FILE */
+#    } data;
+#} _nc_event;
+#
+#typedef struct
+#{
+#    int count;
+#    int result_flags;	/* _NC_EVENT_TIMEOUT_MSEC or _NC_EVENT_FILE_READABLE */
+#    _nc_event *events[1];
+#} _nc_eventlist;
+#
+#extern NCURSES_EXPORT(int) wgetch_events (WINDOW *, _nc_eventlist *);	/* experimental */
+#extern NCURSES_EXPORT(int) wgetnstr_events (WINDOW *,char *,int,_nc_eventlist *);/* experimental */
+#
+##endif /* NCURSES_WGETCH_EVENTS */
+##endif /* NCURSES_EXT_FUNCS */
 
-  # }}}
+# }}}
 
 # GCC (and some other compilers) define '__attribute__'; we're using this
 # macro to alert the compiler to flag inconsistencies in printf/scanf-like
@@ -537,299 +544,299 @@ const
 
 # TODO clean up the nimrod naming for these {{{
 
-proc addch *(const TChtype): cint {.nodecl, importc: "addch ".}# generated
-proc addchnstr *(const PChtype, cint): cint {.nodecl, importc: "addchnstr ".}# generated
-proc addchstr *(const PChtype): cint {.nodecl, importc: "addchstr ".};# generated
-proc addnstr *(const cstring, cint): cint {.nodecl, importc: "addnstr ".};# generated
-proc addstr *(const cstring): cint {.nodecl, importc: "addstr ".};# generated
-proc attroff *(TAttr): cint {.nodecl, importc: "attroff ".};# generated
-proc attron *(TAttr): cint {.nodecl, importc: "attron ".};# generated
-proc attrset *(TAttr): cint {.nodecl, importc: "attrset ".};# generated
-proc attr_get *(PAttr, ptr cshort, PVoid): cint {.nodecl, importc: "attr_get ".};# generated
-proc attr_off *(TAttr, PVoid): cint {.nodecl, importc: "attr_off ".};# generated
-proc attr_on *(TAttr, PVoid): cint {.nodecl, importc: "attr_on ".};# generated
-proc attr_set *(TAttr, cshort, PVoid): cint {.nodecl, importc: "attr_set ".};# generated
-proc baudrate *(): cint {.nodecl, importc: "baudrate ".};# implemented
-proc beep  *(): cint {.nodecl, importc: "beep  ".};# implemented
-proc bkgd *(TChtype): cint {.nodecl, importc: "bkgd ".};# generated
-proc bkgdset *(TChtype): void {.nodecl, importc: "bkgdset ".};# generated
-proc border *(TChtype,TChtype,TChtype,TChtype,TChtype,TChtype,TChtype,TChtype): cint {.nodecl, importc: "border ".};# generated
-proc box *(PWindow, TChtype, TChtype): cint {.nodecl, importc: "box ".};# generated
-proc can_change_color *(): bool {.nodecl, importc: "can_change_color ".};# implemented
-proc cbreak *(): cint {.nodecl, importc: "cbreak ".};# implemented
-proc chgat *(cint, TAttr, cshort, const PVoid): cint {.nodecl, importc: "chgat ".};# generated
-proc clear *(): cint {.nodecl, importc: "clear ".};# generated
-proc clearok *(PWindow,bool): cint {.nodecl, importc: "clearok ".};# implemented
-proc clrtobot *(): cint {.nodecl, importc: "clrtobot ".};# generated
-proc clrtoeol *(): cint {.nodecl, importc: "clrtoeol ".};# generated
-proc color_content *(cshort,ptr cshort,ptr cshort,ptr cshort): cint {.nodecl, importc: "color_content ".};# implemented
-proc color_set *(cshort,PVoid): cint {.nodecl, importc: "color_set ".};# generated
-proc COLOR_PAIR *(cint): cint {.nodecl, importc: "COLOR_PAIR ".};# generated
-proc copywin *(const PWindow,PWindow,cint,cint,cint,cint,cint,cint,cint): cint {.nodecl, importc: "copywin ".};# implemented
-proc curs_set *(cint): cint {.nodecl, importc: "curs_set ".};# implemented
-proc def_prog_mode *(): cint {.nodecl, importc: "def_prog_mode ".};# implemented
-proc def_shell_mode *(): cint {.nodecl, importc: "def_shell_mode ".};# implemented
-proc delay_output *(cint): cint {.nodecl, importc: "delay_output ".};# implemented
-proc delch *(): cint {.nodecl, importc: "delch ".};# generated
-proc delscreen *(PScreen): void {.nodecl, importc: "delscreen ".};# implemented
-proc delwin *(PWindow): cint {.nodecl, importc: "delwin ".};# implemented
-proc deleteln *(): cint {.nodecl, importc: "deleteln ".};# generated
-proc derwin *(PWindow,cint,cint,cint,cint): PWindow {.nodecl, importc: "derwin ".};# implemented
-proc doupdate *(): cint {.nodecl, importc: "doupdate ".};# implemented
-proc dupwin *(PWindow): PWindow {.nodecl, importc: "dupwin ".};# implemented
-proc echo *(): cint {.nodecl, importc: "echo ".};# implemented
-proc echochar *(const TChtype): cint {.nodecl, importc: "echochar ".};# generated
-proc erase *(): cint {.nodecl, importc: "erase ".};# generated
-proc endwin *(): cint {.nodecl, importc: "endwin ".};# implemented
-proc erasechar *(): char {.nodecl, importc: "erasechar ".};# implemented
-proc filter *(): void {.nodecl, importc: "filter ".};# implemented
-proc flash *(): cint {.nodecl, importc: "flash ".};# implemented
-proc flushinp *(): cint {.nodecl, importc: "flushinp ".};# implemented
-proc getbkgd *(PWindow): TChtype {.nodecl, importc: "getbkgd ".};# generated
-proc getch *(): cint {.nodecl, importc: "getch ".};# generated
-proc getnstr *(cstring, cint): cint {.nodecl, importc: "getnstr ".};# generated
-proc getstr *(cstring): cint {.nodecl, importc: "getstr ".};# generated
+proc addch *(TChtype): cint {.nodecl, importc:"addch".}
+proc addchnstr *(PChtype, cint): cint {.nodecl, importc:"addchnstr".}
+proc addchstr *(PChtype): cint {.nodecl, importc:"addchstr".}
+proc addnstr *(cstring, cint): cint {.nodecl, importc:"addnstr".}
+proc addstr *(cstring): cint {.nodecl, importc:"addstr".}
+proc attroff *(TAttr): cint {.nodecl, importc:"attroff".}
+proc attron *(TAttr): cint {.nodecl, importc:"attron".}
+proc attrset *(TAttr): cint {.nodecl, importc:"attrset".}
+proc attr_get *(PAttr, pcshort, PVoid): cint {.nodecl, importc:"attr_get".}
+proc attr_off *(TAttr, PVoid): cint {.nodecl, importc:"attr_off".}
+proc attr_on *(TAttr, PVoid): cint {.nodecl, importc:"attr_on".}
+proc attr_set *(TAttr, cshort, PVoid): cint {.nodecl, importc:"attr_set".}
+proc baudrate *(): cint {.nodecl, importc:"baudrate".}
+proc beep  *(): cint {.nodecl, importc:"beep ".}
+proc bkgd *(TChtype): cint {.nodecl, importc:"bkgd".}
+proc bkgdset *(TChtype) {.nodecl, importc:"bkgdset".}
+proc border *(a,b,c,d,e,f,g,h: TChtype): cint {.nodecl, importc:"border".}
+proc box *(PWindow; a, b: TChtype): cint {.nodecl, importc:"box".}
+proc can_change_color *(): bool {.nodecl, importc:"can_change_color".}
+proc cbreak *(): cint {.nodecl, importc:"cbreak".}
+proc chgat *(cint, TAttr, cshort, PVoid): cint {.nodecl, importc:"chgat".}
+proc clear *(): cint {.nodecl, importc:"clear".}
+proc clearok *(PWindow,bool): cint {.nodecl, importc:"clearok".}
+proc clrtobot *(): cint {.nodecl, importc:"clrtobot".}
+proc clrtoeol *(): cint {.nodecl, importc:"clrtoeol".}
+proc color_content *(cshort;a,b,c:pcshort): cint {.nodecl, importc:"color_content".}
+proc color_set *(cshort,PVoid): cint {.nodecl, importc:"color_set".}
+proc COLOR_PAIR *(cint): cint {.nodecl, importc:"COLOR_PAIR".}
+proc copywin*(i,j: PWindow; a,b,c,d,e,f,g:cint): cint {.nodecl, importc:"copywin".}
+proc curs_set *(cint): cint {.nodecl, importc:"curs_set".}
+proc def_prog_mode *(): cint {.nodecl, importc:"def_prog_mode".}
+proc def_shell_mode *(): cint {.nodecl, importc:"def_shell_mode".}
+proc delay_output *(cint): cint {.nodecl, importc:"delay_output".}
+proc delch *(): cint {.nodecl, importc:"delch".}
+proc delscreen *(PScreen) {.nodecl, importc:"delscreen".}
+proc delwin *(PWindow): cint {.nodecl, importc:"delwin".}
+proc deleteln *(): cint {.nodecl, importc:"deleteln".}
+proc derwin *(zz: PWindow;aa,bb,cc,dd: cint): PWindow {.nodecl, importc:"derwin".}
+proc doupdate *(): cint {.nodecl, importc:"doupdate".}
+proc dupwin *(PWindow): PWindow {.nodecl, importc:"dupwin".}
+proc echo *(): cint {.nodecl, importc:"echo".}
+proc echochar *(TChtype): cint {.nodecl, importc:"echochar".}
+proc erase *(): cint {.nodecl, importc:"erase".}
+proc endwin *(): cint {.nodecl, importc:"endwin".}
+proc erasechar *(): char {.nodecl, importc:"erasechar".}
+proc filter *() {.nodecl, importc:"filter".}
+proc flash *(): cint {.nodecl, importc:"flash".}
+proc flushinp *(): cint {.nodecl, importc:"flushinp".}
+proc getbkgd *(PWindow): TChtype {.nodecl, importc:"getbkgd".}
+proc getch *(): cint {.nodecl, importc:"getch".}
+proc getnstr *(cstring, cint): cint {.nodecl, importc:"getnstr".}
+proc getstr *(cstring): cint {.nodecl, importc:"getstr".}
 
 # TODO getwin *(FILE *): PWindow ;# implemented
 
-proc halfdelay *(cint): cint {.nodecl, importc: "halfdelay ".};# implemented
-proc has_colors *(): bool {.nodecl, importc: "has_colors ".};# implemented
-proc has_ic *(): bool {.nodecl, importc: "has_ic ".};# implemented
-proc has_il *(): bool {.nodecl, importc: "has_il ".};# implemented
-proc hline *(TChtype, cint): cint {.nodecl, importc: "hline ".};# generated
-proc idcok *(PWindow, bool): void {.nodecl, importc: "idcok ".};# implemented
-proc idlok *(PWindow, bool): cint {.nodecl, importc: "idlok ".};# implemented
-proc immedok *(PWindow, bool): void {.nodecl, importc: "immedok ".};# implemented
-proc inch *(): TChtype {.nodecl, importc: "inch ".};# generated
-proc inchnstr *(PChtype, cint): cint {.nodecl, importc: "inchnstr ".};# generated
-proc inchstr *(PChtype): cint {.nodecl, importc: "inchstr ".};# generated
-proc initscr *(): PWindow {.nodecl, importc: "initscr ".};# implemented
-proc init_color *(cshort,cshort,cshort,cshort): cint {.nodecl, importc: "init_color ".};# implemented
-proc init_pair *(cshort,cshort,cshort): cint {.nodecl, importc: "init_pair ".};# implemented
-proc innstr *(cstring, cint): cint {.nodecl, importc: "innstr ".};# generated
-proc insch *(TChtype): cint {.nodecl, importc: "insch ".};# generated
-proc insdelln *(cint): cint {.nodecl, importc: "insdelln ".};# generated
-proc insertln *(): cint {.nodecl, importc: "insertln ".};# generated
-proc insnstr *(const cstring, cint): cint {.nodecl, importc: "insnstr ".};# generated
-proc insstr *(const cstring): cint {.nodecl, importc: "insstr ".};# generated
-proc instr *(cstring): cint {.nodecl, importc: "instr ".};# generated
-proc cintrflush *(PWindow,bool): cint {.nodecl, importc: "cintrflush ".};# implemented
-proc isendwin *(): bool {.nodecl, importc: "isendwin ".};# implemented
-proc is_linetouched *(PWindow,cint): bool {.nodecl, importc: "is_linetouched ".};# implemented
-proc is_wcintouched *(PWindow): bool {.nodecl, importc: "is_wcintouched ".};# implemented
-proc keyname *(cint): const cstring {.nodecl, importc: "keyname ".};# implemented
-proc keypad *(PWindow,bool): cint {.nodecl, importc: "keypad ".};# implemented
-proc killchar *(): char {.nodecl, importc: "killchar ".};# implemented
-proc leaveok *(PWindow,bool): cint {.nodecl, importc: "leaveok ".};# implemented
-proc longname *(): cstring {.nodecl, importc: "longname ".};# implemented
-proc meta *(PWindow,bool): cint {.nodecl, importc: "meta ".};# implemented
-proc move *(cint, cint): cint {.nodecl, importc: "move ".};# generated
-proc mvaddch *(cint, cint, const TChtype): cint {.nodecl, importc: "mvaddch ".};# generated
-proc mvaddchnstr *(cint, cint, const PChtype, cint): cint {.nodecl, importc: "mvaddchnstr ".};# generated
-proc mvaddchstr *(cint, cint, const PChtype): cint {.nodecl, importc: "mvaddchstr ".};# generated
-proc mvaddnstr *(cint, cint, const cstring, cint): cint {.nodecl, importc: "mvaddnstr ".};# generated
-proc mvaddstr *(cint, cint, const cstring): cint {.nodecl, importc: "mvaddstr ".};# generated
-proc mvchgat *(cint, cint, cint, TAttr, cshort, const PVoid): cint {.nodecl, importc: "mvchgat ".};# generated
-proc mvcur *(cint,cint,cint,cint): cint {.nodecl, importc: "mvcur ".};# implemented
-proc mvdelch *(cint, cint): cint {.nodecl, importc: "mvdelch ".};# generated
-proc mvderwin *(PWindow, cint, cint): cint {.nodecl, importc: "mvderwin ".};# implemented
-proc mvgetch *(cint, cint): cint {.nodecl, importc: "mvgetch ".};# generated
-proc mvgetnstr *(cint, cint, cstring, cint): cint {.nodecl, importc: "mvgetnstr ".};# generated
-proc mvgetstr *(cint, cint, cstring): cint {.nodecl, importc: "mvgetstr ".};# generated
-proc mvhline *(cint, cint, TChtype, cint): cint {.nodecl, importc: "mvhline ".};# generated
-proc mvinch *(cint, cint): TChtype {.nodecl, importc: "mvinch ".};# generated
-proc mvinchnstr *(cint, cint, PChtype, cint): cint {.nodecl, importc: "mvinchnstr ".};# generated
-proc mvinchstr *(cint, cint, PChtype): cint {.nodecl, importc: "mvinchstr ".};# generated
-proc mvinnstr *(cint, cint, cstring, cint): cint {.nodecl, importc: "mvinnstr ".};# generated
-proc mvinsch *(cint, cint, TChtype): cint {.nodecl, importc: "mvinsch ".};# generated
-proc mvinsnstr *(cint, cint, const cstring, cint): cint {.nodecl, importc: "mvinsnstr ".};# generated
-proc mvinsstr *(cint, cint, const cstring): cint {.nodecl, importc: "mvinsstr ".};# generated
-proc mvinstr *(cint, cint, cstring): cint {.nodecl, importc: "mvinstr ".};# generated
+proc halfdelay *(cint): cint {.nodecl, importc:"halfdelay".}# implemented
+proc has_colors *(): bool {.nodecl, importc:"has_colors".}# implemented
+proc has_ic *(): bool {.nodecl, importc:"has_ic".}# implemented
+proc has_il *(): bool {.nodecl, importc:"has_il".}# implemented
+proc hline *(TChtype, cint): cint {.nodecl, importc:"hline".}# generated
+proc idcok *(PWindow, bool) {.nodecl, importc:"idcok".}# implemented
+proc idlok *(PWindow, bool): cint {.nodecl, importc:"idlok".}# implemented
+proc immedok *(PWindow, bool) {.nodecl, importc:"immedok".}# implemented
+proc inch *(): TChtype {.nodecl, importc:"inch".}# generated
+proc inchnstr *(PChtype, cint): cint {.nodecl, importc:"inchnstr".}# generated
+proc inchstr *(PChtype): cint {.nodecl, importc:"inchstr".}# generated
+proc initscr *(): PWindow {.nodecl, importc:"initscr".}# implemented
+proc init_color *(a,b,c,d:cshort): cint {.nodecl, importc:"init_color".}# implemented
+proc init_pair *(a, b, c: cshort): cint {.nodecl, importc:"init_pair".}# implemented
+proc innstr *(cstring, cint): cint {.nodecl, importc:"innstr".}# generated
+proc insch *(TChtype): cint {.nodecl, importc:"insch".}# generated
+proc insdelln *(cint): cint {.nodecl, importc:"insdelln".}# generated
+proc insertln *(): cint {.nodecl, importc:"insertln".}# generated
+proc insnstr *(cstring, cint): cint {.nodecl, importc:"insnstr".}# generated
+proc insstr *(cstring): cint {.nodecl, importc:"insstr".}# generated
+proc instr *(cstring): cint {.nodecl, importc:"instr".}# generated
+proc cintrflush *(PWindow,bool): cint {.nodecl, importc:"cintrflush".}# implemented
+proc isendwin *(): bool {.nodecl, importc:"isendwin".}# implemented
+proc is_linetouched *(PWindow,cint): bool {.nodecl, importc:"is_linetouched".}# implemented
+proc is_wcintouched *(PWindow): bool {.nodecl, importc:"is_wcintouched".}# implemented
+proc keyname *(cint): cstring {.nodecl, importc:"keyname".}# implemented
+proc keypad *(PWindow,bool): cint {.nodecl, importc:"keypad".}# implemented
+proc killchar *(): char {.nodecl, importc:"killchar".}# implemented
+proc leaveok *(PWindow,bool): cint {.nodecl, importc:"leaveok".}# implemented
+proc longname *(): cstring {.nodecl, importc:"longname".}# implemented
+proc meta *(PWindow,bool): cint {.nodecl, importc:"meta".}# implemented
+proc move *(a, b: cint;): cint {.nodecl, importc:"move".}# generated
+proc mvaddch *(a, b: cint; TChtype): cint {.nodecl, importc:"mvaddch".}# generated
+proc mvaddchnstr *(a, b: cint; PChtype, cint): cint {.nodecl, importc:"mvaddchnstr".}# generated
+proc mvaddchstr *(a, b: cint; PChtype): cint {.nodecl, importc:"mvaddchstr".}# generated
+proc mvaddnstr *(a, b: cint; cstring, cint): cint {.nodecl, importc:"mvaddnstr".}# generated
+proc mvaddstr *(a, b: cint; cstring): cint {.nodecl, importc:"mvaddstr".}# generated
+proc mvchgat *(a, b: cint; cint, TAttr, cshort, PVoid): cint {.nodecl, importc:"mvchgat".}# generated
+proc mvcur *(a, b, c, d: cint): cint {.nodecl, importc:"mvcur".}# implemented
+proc mvdelch *(a, b: cint;): cint {.nodecl, importc:"mvdelch".}# generated
+proc mvderwin *(PWindow, a, b: cint;): cint {.nodecl, importc:"mvderwin".}# implemented
+proc mvgetch *(a, b: cint;): cint {.nodecl, importc:"mvgetch".}# generated
+proc mvgetnstr *(a, b: cint; cstring, cint): cint {.nodecl, importc:"mvgetnstr".}# generated
+proc mvgetstr *(a, b: cint; cstring): cint {.nodecl, importc:"mvgetstr".}# generated
+proc mvhline *(a, b: cint; TChtype, cint): cint {.nodecl, importc:"mvhline".}# generated
+proc mvinch *(a, b: cint;): TChtype {.nodecl, importc:"mvinch".}# generated
+proc mvinchnstr *(a, b: cint; PChtype, cint): cint {.nodecl, importc:"mvinchnstr".}# generated
+proc mvinchstr *(a, b: cint; PChtype): cint {.nodecl, importc:"mvinchstr".}# generated
+proc mvinnstr *(a, b: cint; cstring, cint): cint {.nodecl, importc:"mvinnstr".}# generated
+proc mvinsch *(a, b: cint; TChtype): cint {.nodecl, importc:"mvinsch".}# generated
+proc mvinsnstr *(a, b: cint; cstring, cint): cint {.nodecl, importc:"mvinsnstr".}# generated
+proc mvinsstr *(a, b: cint; cstring): cint {.nodecl, importc:"mvinsstr".}# generated
+proc mvinstr *(a, b: cint; cstring): cint {.nodecl, importc:"mvinstr".}# generated
 
-# TODO mvprcintw *(cint,cint, const cstring,...): cint ;# implemented
+# TODO mvprcintw *(cint,cint, cstring,...): cint ;# implemented
 # TODO mvscanw *(cint,cint, NCURSES_CONST cstring,...): cint ;# implemented
 
-proc mvvline *(cint, cint, TChtype, cint): cint {.nodecl, importc: "mvvline ".};# generated
-proc mvwaddch *(PWindow, cint, cint, const TChtype): cint {.nodecl, importc: "mvwaddch ".};# generated
-proc mvwaddchnstr *(PWindow, cint, cint, const PChtype, cint): cint {.nodecl, importc: "mvwaddchnstr ".};# generated
-proc mvwaddchstr *(PWindow, cint, cint, const PChtype): cint {.nodecl, importc: "mvwaddchstr ".};# generated
-proc mvwaddnstr *(PWindow, cint, cint, const cstring, cint): cint {.nodecl, importc: "mvwaddnstr ".};# generated
-proc mvwaddstr *(PWindow, cint, cint, const cstring): cint {.nodecl, importc: "mvwaddstr ".};# generated
-proc mvwchgat *(PWindow, cint, cint, cint, TAttr, cshort, const PVoid): cint {.nodecl, importc: "mvwchgat ".};# generated
-proc mvwdelch *(PWindow, cint, cint): cint {.nodecl, importc: "mvwdelch ".};# generated
-proc mvwgetch *(PWindow, cint, cint): cint {.nodecl, importc: "mvwgetch ".};# generated
-proc mvwgetnstr *(PWindow, cint, cint, cstring, cint): cint {.nodecl, importc: "mvwgetnstr ".};# generated
-proc mvwgetstr *(PWindow, cint, cint, cstring): cint {.nodecl, importc: "mvwgetstr ".};# generated
-proc mvwhline *(PWindow, cint, cint, TChtype, cint): cint {.nodecl, importc: "mvwhline ".};# generated
-proc mvwin *(PWindow,cint,cint): cint {.nodecl, importc: "mvwin ".};# implemented
-proc mvwinch *(PWindow, cint, cint): TChtype {.nodecl, importc: "mvwinch ".};# generated
-proc mvwinchnstr *(PWindow, cint, cint, PChtype, cint): cint {.nodecl, importc: "mvwinchnstr ".};# generated
-proc mvwinchstr *(PWindow, cint, cint, PChtype): cint {.nodecl, importc: "mvwinchstr ".};# generated
-proc mvwinnstr *(PWindow, cint, cint, cstring, cint): cint {.nodecl, importc: "mvwinnstr ".};# generated
-proc mvwinsch *(PWindow, cint, cint, TChtype): cint {.nodecl, importc: "mvwinsch ".};# generated
-proc mvwinsnstr *(PWindow, cint, cint, const cstring, cint): cint {.nodecl, importc: "mvwinsnstr ".};# generated
-proc mvwinsstr *(PWindow, cint, cint, const cstring): cint {.nodecl, importc: "mvwinsstr ".};# generated
-proc mvwinstr *(PWindow, cint, cint, cstring): cint {.nodecl, importc: "mvwinstr ".};# generated
+proc mvvline *(a, b: cint; TChtype, cint): cint {.nodecl, importc:"mvvline".}# generated
+proc mvwaddch *(PWindow, a, b: cint; TChtype): cint {.nodecl, importc:"mvwaddch".}# generated
+proc mvwaddchnstr *(PWindow, a, b: cint; PChtype, cint): cint {.nodecl, importc:"mvwaddchnstr".}# generated
+proc mvwaddchstr *(PWindow, a, b: cint; PChtype): cint {.nodecl, importc:"mvwaddchstr".}# generated
+proc mvwaddnstr *(PWindow, a, b: cint; cstring, cint): cint {.nodecl, importc:"mvwaddnstr".}# generated
+proc mvwaddstr *(PWindow, a, b: cint; cstring): cint {.nodecl, importc:"mvwaddstr".}# generated
+proc mvwchgat *(PWindow, a, b: cint; cint, TAttr, cshort, PVoid): cint {.nodecl, importc:"mvwchgat".}# generated
+proc mvwdelch *(PWindow, a, b: cint;): cint {.nodecl, importc:"mvwdelch".}# generated
+proc mvwgetch *(PWindow, a, b: cint;): cint {.nodecl, importc:"mvwgetch".}# generated
+proc mvwgetnstr *(PWindow, a, b: cint; cstring, cint): cint {.nodecl, importc:"mvwgetnstr".}# generated
+proc mvwgetstr *(PWindow, a, b: cint; cstring): cint {.nodecl, importc:"mvwgetstr".}# generated
+proc mvwhline *(PWindow, a, b: cint; TChtype, cint): cint {.nodecl, importc:"mvwhline".}# generated
+proc mvwin *(PWindow; a, b: cint): cint {.nodecl, importc:"mvwin".}# implemented
+proc mvwinch *(PWindow, a, b: cint;): TChtype {.nodecl, importc:"mvwinch".}# generated
+proc mvwinchnstr *(PWindow, a, b: cint; PChtype, cint): cint {.nodecl, importc:"mvwinchnstr".}# generated
+proc mvwinchstr *(PWindow, a, b: cint; PChtype): cint {.nodecl, importc:"mvwinchstr".}# generated
+proc mvwinnstr *(PWindow, a, b: cint; cstring, cint): cint {.nodecl, importc:"mvwinnstr".}# generated
+proc mvwinsch *(PWindow, a, b: cint; TChtype): cint {.nodecl, importc:"mvwinsch".}# generated
+proc mvwinsnstr *(PWindow, a, b: cint; cstring, cint): cint {.nodecl, importc:"mvwinsnstr".}# generated
+proc mvwinsstr *(PWindow, a, b: cint; cstring): cint {.nodecl, importc:"mvwinsstr".}# generated
+proc mvwinstr *(PWindow, a, b: cint; cstring): cint {.nodecl, importc:"mvwinstr".}# generated
 
-# TODO mvwprcintw *(PWindow,cint,cint, const cstring,...): cint ;# implemented
+# TODO mvwprcintw *(PWindow,cint,cint, cstring,...): cint ;# implemented
 # TODO mvwscanw *(PWindow,cint,cint, NCURSES_CONST cstring,...): cint ;# implemented
 
-proc mvwvline *(PWindow,cint, cint, TChtype, cint): cint {.nodecl, importc: "mvwvline ".};# generated
-proc napms *(cint): cint {.nodecl, importc: "napms ".};# implemented
-proc newpad *(cint,cint): PWindow {.nodecl, importc: "newpad ".};# implemented
+proc mvwvline *(PWindow,a, b: cint; TChtype, cint): cint {.nodecl, importc:"mvwvline".}# generated
+proc napms *(cint): cint {.nodecl, importc:"napms".}# implemented
+proc newpad *(a, b: cint): PWindow {.nodecl, importc:"newpad".}# implemented
 
 # TODO newterm *(NCURSES_CONST cstring,FILE *,FILE *): PScreen ;# implemented
 
-proc newwin *(cint,cint,cint,cint): PWindow {.nodecl, importc: "newwin ".};# implemented
-proc nl *(): cint {.nodecl, importc: "nl ".};# implemented
-proc nocbreak *(): cint {.nodecl, importc: "nocbreak ".};# implemented
-proc nodelay *(PWindow,bool): cint {.nodecl, importc: "nodelay ".};# implemented
-proc noecho *(): cint {.nodecl, importc: "noecho ".};# implemented
-proc nonl *(): cint {.nodecl, importc: "nonl ".};# implemented
-proc noqiflush *(): void {.nodecl, importc: "noqiflush ".};# implemented
-proc noraw *(): cint {.nodecl, importc: "noraw ".};# implemented
-proc notimeout *(PWindow,bool): cint {.nodecl, importc: "notimeout ".};# implemented
-proc overlay *(const PWindow,PWindow): cint {.nodecl, importc: "overlay ".};# implemented
-proc overwrite *(const PWindow,PWindow): cint {.nodecl, importc: "overwrite ".};# implemented
-proc pair_content *(cshort,ptr cshort,ptr cshort): cint {.nodecl, importc: "pair_content ".};# implemented
-proc PAIR_NUMBER *(cint): cint {.nodecl, importc: "PAIR_NUMBER ".};# generated
-proc pechochar *(PWindow, const TChtype): cint {.nodecl, importc: "pechochar ".};# implemented
-proc pnoutrefresh *(PWindow,cint,cint,cint,cint,cint,cint): cint {.nodecl, importc: "pnoutrefresh ".};# implemented
-proc prefresh *(PWindow,cint,cint,cint,cint,cint,cint): cint {.nodecl, importc: "prefresh ".};# implemented
+proc newwin *(a, b, c, d: cint): PWindow {.nodecl, importc:"newwin".}# implemented
+proc nl *(): cint {.nodecl, importc:"nl".}# implemented
+proc nocbreak *(): cint {.nodecl, importc:"nocbreak".}# implemented
+proc nodelay *(PWindow,bool): cint {.nodecl, importc:"nodelay".}# implemented
+proc noecho *(): cint {.nodecl, importc:"noecho".}# implemented
+proc nonl *(): cint {.nodecl, importc:"nonl".}# implemented
+proc noqiflush *() {.nodecl, importc:"noqiflush".}# implemented
+proc noraw *(): cint {.nodecl, importc:"noraw".}# implemented
+proc notimeout *(PWindow,bool): cint {.nodecl, importc:"notimeout".}# implemented
+proc overlay *(a, b: PWindow): cint {.nodecl, importc:"overlay".}# implemented
+proc overwrite *(a, b: PWindow): cint {.nodecl, importc:"overwrite".}# implemented
+proc pair_content *(cshort; a , b: ptr cshort): cint {.nodecl, importc:"pair_content".}# implemented
+proc PAIR_NUMBER *(cint): cint {.nodecl, importc:"PAIR_NUMBER".}# generated
+proc pechochar *(PWindow, TChtype): cint {.nodecl, importc:"pechochar".}# implemented
+proc pnoutrefresh *(PWindow; a, b, c, d, e, f: cint): cint {.nodecl, importc:"pnoutrefresh".}# implemented
+proc prefresh *(PWindow; a, b, c, d, e, f: cint): cint {.nodecl, importc:"prefresh".}# implemented
 
-# TODO prcintw *(const cstring,...): cint ;# implemented
+# TODO prcintw *(cstring,...): cint ;# implemented
 
 # TODO putwin *(PWindow, FILE *): cint ;# implemented
 
-proc qiflush *(): void {.nodecl, importc: "qiflush ".};# implemented
-proc raw *(): cint {.nodecl, importc: "raw ".};# implemented
-proc redrawwin *(PWindow): cint {.nodecl, importc: "redrawwin ".};# generated
-proc refresh *(): cint {.nodecl, importc: "refresh ".};# generated
-proc resetty *(): cint {.nodecl, importc: "resetty ".};# implemented
-proc reset_prog_mode *(): cint {.nodecl, importc: "reset_prog_mode ".};# implemented
-proc reset_shell_mode *(): cint {.nodecl, importc: "reset_shell_mode ".};# implemented
+proc qiflush *() {.nodecl, importc:"qiflush".}# implemented
+proc raw *(): cint {.nodecl, importc:"raw".}# implemented
+proc redrawwin *(PWindow): cint {.nodecl, importc:"redrawwin".}# generated
+proc refresh *(): cint {.nodecl, importc:"refresh".}# generated
+proc resetty *(): cint {.nodecl, importc:"resetty".}# implemented
+proc reset_prog_mode *(): cint {.nodecl, importc:"reset_prog_mode".}# implemented
+proc reset_shell_mode *(): cint {.nodecl, importc:"reset_shell_mode".}# implemented
 
 # TODO ripoffline *(cint, cint (*)(PWindow, cint)): cint ;# implemented
 
-proc savetty *(): cint {.nodecl, importc: "savetty ".};# implemented
+proc savetty *(): cint {.nodecl, importc:"savetty".}# implemented
 
 # TODO scanw *(NCURSES_CONST cstring,...): cint ;# implemented
 
-proc scr_dump *(const cstring): cint {.nodecl, importc: "scr_dump ".};# implemented
-proc scr_init *(const cstring): cint {.nodecl, importc: "scr_init ".};# implemented
-proc scrl *(cint): cint {.nodecl, importc: "scrl ".};# generated
-proc scroll *(PWindow): cint {.nodecl, importc: "scroll ".};# generated
-proc scrollok *(PWindow,bool): cint {.nodecl, importc: "scrollok ".};# implemented
-proc scr_restore *(const cstring): cint {.nodecl, importc: "scr_restore ".};# implemented
-proc scr_set *(const cstring): cint {.nodecl, importc: "scr_set ".};# implemented
-proc setscrreg *(cint,cint): cint {.nodecl, importc: "setscrreg ".};# generated
-proc set_term *(PScreen): PScreen {.nodecl, importc: "set_term ".};# implemented
-proc slk_attroff *(const TChtype): cint {.nodecl, importc: "slk_attroff ".};# implemented
-proc slk_attr_off *(const TAttr, PVoid): cint {.nodecl, importc: "slk_attr_off ".};# generated:WIDEC
-proc slk_attron *(const TChtype): cint {.nodecl, importc: "slk_attron ".};# implemented
-proc slk_attr_on *(TAttr,PVoid): cint {.nodecl, importc: "slk_attr_on ".};# generated:WIDEC
-proc slk_attrset *(const TChtype): cint {.nodecl, importc: "slk_attrset ".};# implemented
-proc slk_attr *(): TAttr {.nodecl, importc: "slk_attr ".};# implemented
-proc slk_attr_set *(const TAttr,cshort,PVoid): cint {.nodecl, importc: "slk_attr_set ".};# implemented
-proc slk_clear *(): cint {.nodecl, importc: "slk_clear ".};# implemented
-proc slk_color *(cshort): cint {.nodecl, importc: "slk_color ".};# implemented
-proc slk_init *(cint): cint {.nodecl, importc: "slk_init ".};# implemented
-proc slk_label *(cint): cstring {.nodecl, importc: "slk_label ".};# implemented
-proc slk_noutrefresh *(): cint {.nodecl, importc: "slk_noutrefresh ".};# implemented
-proc slk_refresh *(): cint {.nodecl, importc: "slk_refresh ".};# implemented
-proc slk_restore *(): cint {.nodecl, importc: "slk_restore ".};# implemented
-proc slk_set *(cint,const cstring,cint): cint {.nodecl, importc: "slk_set ".};# implemented
-proc slk_touch *(): cint {.nodecl, importc: "slk_touch ".};# implemented
-proc standout *(): cint {.nodecl, importc: "standout ".};# generated
-proc standend *(): cint {.nodecl, importc: "standend ".};# generated
-proc start_color *(): cint {.nodecl, importc: "start_color ".};# implemented
-proc subpad *(PWindow, cint, cint, cint, cint): PWindow {.nodecl, importc: "subpad ".};# implemented
-proc subwin *(PWindow, cint, cint, cint, cint): PWindow {.nodecl, importc: "subwin ".};# implemented
-proc syncok *(PWindow, bool): cint {.nodecl, importc: "syncok ".};# implemented
-proc termattrs *(): TChtype {.nodecl, importc: "termattrs ".};# implemented
-proc termname *(): cstring {.nodecl, importc: "termname ".};# implemented
-proc timeout *(cint): void {.nodecl, importc: "timeout ".};# generated
-proc touchline *(PWindow, cint, cint): cint {.nodecl, importc: "touchline ".};# generated
-proc touchwin *(PWindow): cint {.nodecl, importc: "touchwin ".};# generated
-proc typeahead *(cint): cint {.nodecl, importc: "typeahead ".};# implemented
-proc ungetch *(cint): cint {.nodecl, importc: "ungetch ".};# implemented
-proc untouchwin *(PWindow): cint {.nodecl, importc: "untouchwin ".};# generated
-proc use_env *(bool): void {.nodecl, importc: "use_env ".};# implemented
-proc vidattr *(TChtype): cint {.nodecl, importc: "vidattr ".};# implemented
-proc vidputs *(TChtype, NCURSES_OUTC): cint {.nodecl, importc: "vidputs ".};# implemented
-proc vline *(TChtype, cint): cint {.nodecl, importc: "vline ".};# generated
+proc scr_dump *(cstring): cint {.nodecl, importc:"scr_dump".}# implemented
+proc scr_init *(cstring): cint {.nodecl, importc:"scr_init".}# implemented
+proc scrl *(cint): cint {.nodecl, importc:"scrl".}# generated
+proc scroll *(PWindow): cint {.nodecl, importc:"scroll".}# generated
+proc scrollok *(PWindow,bool): cint {.nodecl, importc:"scrollok".}# implemented
+proc scr_restore *(cstring): cint {.nodecl, importc:"scr_restore".}# implemented
+proc scr_set *(cstring): cint {.nodecl, importc:"scr_set".}# implemented
+proc setscrreg *(a, b: cint;): cint {.nodecl, importc:"setscrreg".}# generated
+proc set_term *(PScreen): PScreen {.nodecl, importc:"set_term".}# implemented
+proc slk_attroff *(TChtype): cint {.nodecl, importc:"slk_attroff".}# implemented
+proc slk_attr_off *(TAttr, PVoid): cint {.nodecl, importc:"slk_attr_off".}# generated:WIDEC
+proc slk_attron *(TChtype): cint {.nodecl, importc:"slk_attron".}# implemented
+proc slk_attr_on *(TAttr,PVoid): cint {.nodecl, importc:"slk_attr_on".}# generated:WIDEC
+proc slk_attrset *(TChtype): cint {.nodecl, importc:"slk_attrset".}# implemented
+proc slk_attr *(): TAttr {.nodecl, importc:"slk_attr".}# implemented
+proc slk_attr_set *(TAttr,cshort,PVoid): cint {.nodecl, importc:"slk_attr_set".}# implemented
+proc slk_clear *(): cint {.nodecl, importc:"slk_clear".}# implemented
+proc slk_color *(cshort): cint {.nodecl, importc:"slk_color".}# implemented
+proc slk_init *(cint): cint {.nodecl, importc:"slk_init".}# implemented
+proc slk_label *(cint): cstring {.nodecl, importc:"slk_label".}# implemented
+proc slk_noutrefresh *(): cint {.nodecl, importc:"slk_noutrefresh".}# implemented
+proc slk_refresh *(): cint {.nodecl, importc:"slk_refresh".}# implemented
+proc slk_restore *(): cint {.nodecl, importc:"slk_restore".}# implemented
+proc slk_set *(a: cint; b: cstring; c: cint): cint {.nodecl, importc:"slk_set".}# implemented
+proc slk_touch *(): cint {.nodecl, importc:"slk_touch".}# implemented
+proc standout *(): cint {.nodecl, importc:"standout".}# generated
+proc standend *(): cint {.nodecl, importc:"standend".}# generated
+proc start_color *(): cint {.nodecl, importc:"start_color".}# implemented
+proc subpad *(PWindow; a, b, c, d: cint): PWindow {.nodecl, importc:"subpad".}# implemented
+proc subwin *(PWindow; a, b, c, d: cint): PWindow {.nodecl, importc:"subwin".}# implemented
+proc syncok *(PWindow, bool): cint {.nodecl, importc:"syncok".}# implemented
+proc termattrs *(): TChtype {.nodecl, importc:"termattrs".}# implemented
+proc termname *(): cstring {.nodecl, importc:"termname".}# implemented
+proc timeout *(cint) {.nodecl, importc:"timeout".}# generated
+proc touchline *(PWindow, a, b: cint;): cint {.nodecl, importc:"touchline".}# generated
+proc touchwin *(PWindow): cint {.nodecl, importc:"touchwin".}# generated
+proc typeahead *(cint): cint {.nodecl, importc:"typeahead".}# implemented
+proc ungetch *(cint): cint {.nodecl, importc:"ungetch".}# implemented
+proc untouchwin *(PWindow): cint {.nodecl, importc:"untouchwin".}# generated
+proc use_env *(bool) {.nodecl, importc:"use_env".}# implemented
+proc vidattr *(TChtype): cint {.nodecl, importc:"vidattr".}# implemented
+proc vidputs *(TChtype, NCURSES_OUTC): cint {.nodecl, importc:"vidputs".}# implemented
+proc vline *(TChtype, cint): cint {.nodecl, importc:"vline".}# generated
 
-# TODO vwprcintw *(PWindow, const cstring,va_list): cint ;# implemented
-# TODO vw_prcintw *(PWindow, const cstring,va_list): cint ;# generated
+# TODO vwprcintw *(PWindow, cstring,va_list): cint ;# implemented
+# TODO vw_prcintw *(PWindow, cstring,va_list): cint ;# generated
 # TODO vwscanw *(PWindow, NCURSES_CONST cstring,va_list): cint ;# implemented
 # TODO vw_scanw *(PWindow, NCURSES_CONST cstring,va_list): cint ;# generated
 
-proc waddch *(PWindow, const TChtype): cint {.nodecl, importc: "waddch ".};# implemented
-proc waddchnstr *(PWindow,const PChtype,cint): cint {.nodecl, importc: "waddchnstr ".};# implemented
-proc waddchstr *(PWindow,const PChtype): cint {.nodecl, importc: "waddchstr ".};# generated
-proc waddnstr *(PWindow,const cstring,cint): cint {.nodecl, importc: "waddnstr ".};# implemented
-proc waddstr *(PWindow,const cstring): cint {.nodecl, importc: "waddstr ".};# generated
-proc wattron *(PWindow, cint): cint {.nodecl, importc: "wattron ".};# generated
-proc wattroff *(PWindow, cint): cint {.nodecl, importc: "wattroff ".};# generated
-proc wattrset *(PWindow, cint): cint {.nodecl, importc: "wattrset ".};# generated
-proc wattr_get *(PWindow, PAttr, ptr cshort, PVoid): cint {.nodecl, importc: "wattr_get ".};# generated
-proc wattr_on *(PWindow, TAttr, PVoid): cint {.nodecl, importc: "wattr_on ".};# implemented
-proc wattr_off *(PWindow, TAttr, PVoid): cint {.nodecl, importc: "wattr_off ".};# implemented
-proc wattr_set *(PWindow, TAttr, cshort, PVoid): cint {.nodecl, importc: "wattr_set ".};# generated
-proc wbkgd *(PWindow, TChtype): cint {.nodecl, importc: "wbkgd ".};# implemented
-proc wbkgdset *(PWindow,TChtype): void {.nodecl, importc: "wbkgdset ".};# implemented
-proc wborder *(PWindow,TChtype,TChtype,TChtype,TChtype,TChtype,TChtype,TChtype,TChtype): cint {.nodecl, importc: "wborder ".};# implemented
-proc wchgat *(PWindow, cint, TAttr, cshort, const PVoid): cint {.nodecl, importc: "wchgat ".};# implemented
-proc wclear *(PWindow): cint {.nodecl, importc: "wclear ".};# implemented
-proc wclrtobot *(PWindow): cint {.nodecl, importc: "wclrtobot ".};# implemented
-proc wclrtoeol *(PWindow): cint {.nodecl, importc: "wclrtoeol ".};# implemented
-proc wcolor_set *(PWindow,cshort,PVoid): cint {.nodecl, importc: "wcolor_set ".};# implemented
-proc wcursyncup *(PWindow): void {.nodecl, importc: "wcursyncup ".};# implemented
-proc wdelch *(PWindow): cint {.nodecl, importc: "wdelch ".};# implemented
-proc wdeleteln *(PWindow): cint {.nodecl, importc: "wdeleteln ".};# generated
-proc wechochar *(PWindow, const TChtype): cint {.nodecl, importc: "wechochar ".};# implemented
-proc werase *(PWindow): cint {.nodecl, importc: "werase ".};# implemented
-proc wgetch *(PWindow): cint {.nodecl, importc: "wgetch ".};# implemented
-proc wgetnstr *(PWindow,cstring,cint): cint {.nodecl, importc: "wgetnstr ".};# implemented
-proc wgetstr *(PWindow, cstring): cint {.nodecl, importc: "wgetstr ".};# generated
-proc whline *(PWindow, TChtype, cint): cint {.nodecl, importc: "whline ".};# implemented
-proc winch *(PWindow): TChtype {.nodecl, importc: "winch ".};# implemented
-proc winchnstr *(PWindow, PChtype, cint): cint {.nodecl, importc: "winchnstr ".};# implemented
-proc winchstr *(PWindow, PChtype): cint {.nodecl, importc: "winchstr ".};# generated
-proc winnstr *(PWindow, cstring, cint): cint {.nodecl, importc: "winnstr ".};# implemented
-proc winsch *(PWindow, TChtype): cint {.nodecl, importc: "winsch ".};# implemented
-proc winsdelln *(PWindow,cint): cint {.nodecl, importc: "winsdelln ".};# implemented
-proc winsertln *(PWindow): cint {.nodecl, importc: "winsertln ".};# generated
-proc winsnstr *(PWindow, const cstring,cint): cint {.nodecl, importc: "winsnstr ".};# implemented
-proc winsstr *(PWindow, const cstring): cint {.nodecl, importc: "winsstr ".};# generated
-proc winstr *(PWindow, cstring): cint {.nodecl, importc: "winstr ".};# generated
-proc wmove *(PWindow,cint,cint): cint {.nodecl, importc: "wmove ".};# implemented
-proc wnoutrefresh *(PWindow): cint {.nodecl, importc: "wnoutrefresh ".};# implemented
+proc waddch *(PWindow, TChtype): cint {.nodecl, importc:"waddch".}# implemented
+proc waddchnstr *(PWindow,PChtype,cint): cint {.nodecl, importc:"waddchnstr".}# implemented
+proc waddchstr *(PWindow,PChtype): cint {.nodecl, importc:"waddchstr".}# generated
+proc waddnstr *(PWindow,cstring,cint): cint {.nodecl, importc:"waddnstr".}# implemented
+proc waddstr *(PWindow,cstring): cint {.nodecl, importc:"waddstr".}# generated
+proc wattron *(PWindow, cint): cint {.nodecl, importc:"wattron".}# generated
+proc wattroff *(PWindow, cint): cint {.nodecl, importc:"wattroff".}# generated
+proc wattrset *(PWindow, cint): cint {.nodecl, importc:"wattrset".}# generated
+proc wattr_get *(a: PWindow, b: PAttr, c: ptr cshort, d: ptr void): cint {.nodecl, importc:"wattr_get".}# generated
+proc wattr_on *(PWindow, TAttr, PVoid): cint {.nodecl, importc:"wattr_on".}# implemented
+proc wattr_off *(PWindow, TAttr, PVoid): cint {.nodecl, importc:"wattr_off".}# implemented
+proc wattr_set *(PWindow, TAttr, cshort, PVoid): cint {.nodecl, importc:"wattr_set".}# generated
+proc wbkgd *(PWindow, TChtype): cint {.nodecl, importc:"wbkgd".}# implemented
+proc wbkgdset *(PWindow,TChtype) {.nodecl, importc:"wbkgdset".}# implemented
+proc wborder *(PWindow; a, b, c, d, e, f, g, h: TChtype): cint {.nodecl, importc:"wborder".}# implemented
+proc wchgat *(PWindow, cint, TAttr, cshort, PVoid): cint {.nodecl, importc:"wchgat".}# implemented
+proc wclear *(PWindow): cint {.nodecl, importc:"wclear".}# implemented
+proc wclrtobot *(PWindow): cint {.nodecl, importc:"wclrtobot".}# implemented
+proc wclrtoeol *(PWindow): cint {.nodecl, importc:"wclrtoeol".}# implemented
+proc wcolor_set *(PWindow,cshort,PVoid): cint {.nodecl, importc:"wcolor_set".}# implemented
+proc wcursyncup *(PWindow) {.nodecl, importc:"wcursyncup".}# implemented
+proc wdelch *(PWindow): cint {.nodecl, importc:"wdelch".}# implemented
+proc wdeleteln *(PWindow): cint {.nodecl, importc:"wdeleteln".}# generated
+proc wechochar *(PWindow, TChtype): cint {.nodecl, importc:"wechochar".}# implemented
+proc werase *(PWindow): cint {.nodecl, importc:"werase".}# implemented
+proc wgetch *(PWindow): cint {.nodecl, importc:"wgetch".}# implemented
+proc wgetnstr *(PWindow,cstring,cint): cint {.nodecl, importc:"wgetnstr".}# implemented
+proc wgetstr *(PWindow, cstring): cint {.nodecl, importc:"wgetstr".}# generated
+proc whline *(PWindow, TChtype, cint): cint {.nodecl, importc:"whline".}# implemented
+proc winch *(PWindow): TChtype {.nodecl, importc:"winch".}# implemented
+proc winchnstr *(PWindow, PChtype, cint): cint {.nodecl, importc:"winchnstr".}# implemented
+proc winchstr *(PWindow, PChtype): cint {.nodecl, importc:"winchstr".}# generated
+proc winnstr *(PWindow, cstring, cint): cint {.nodecl, importc:"winnstr".}# implemented
+proc winsch *(PWindow, TChtype): cint {.nodecl, importc:"winsch".}# implemented
+proc winsdelln *(PWindow,cint): cint {.nodecl, importc:"winsdelln".}# implemented
+proc winsertln *(PWindow): cint {.nodecl, importc:"winsertln".}# generated
+proc winsnstr *(PWindow, cstring,cint): cint {.nodecl, importc:"winsnstr".}# implemented
+proc winsstr *(PWindow, cstring): cint {.nodecl, importc:"winsstr".}# generated
+proc winstr *(PWindow, cstring): cint {.nodecl, importc:"winstr".}# generated
+proc wmove *(PWindow,a, b: cint;): cint {.nodecl, importc:"wmove".}# implemented
+proc wnoutrefresh *(PWindow): cint {.nodecl, importc:"wnoutrefresh".}# implemented
 
-# TODO extern NCURSES_EXPORT*(cint) wprcintw (PWindow, const cstring,...)# implemented
+# TODO extern NCURSES_EXPORT*(cint) wprcintw (PWindow, cstring,...)# implemented
 
-proc wredrawln *(PWindow,cint,cint): cint {.nodecl, importc: "wredrawln ".};# implemented
-proc wrefresh *(PWindow): cint {.nodecl, importc: "wrefresh ".};# implemented
+proc wredrawln *(PWindow; a, b: cint): cint {.nodecl, importc:"wredrawln".}# implemented
+proc wrefresh *(PWindow): cint {.nodecl, importc:"wrefresh".}# implemented
 
 # TODO extern NCURSES_EXPORT*(cint) wscanw (PWindow, NCURSES_CONST cstring,...)# implemented
 
-proc wscrl *(PWindow,cint): cint {.nodecl, importc: "wscrl ".};# implemented
-proc wsetscrreg *(PWindow,cint,cint): cint {.nodecl, importc: "wsetscrreg ".};# implemented
-proc wstandout *(PWindow): cint {.nodecl, importc: "wstandout ".};# generated
-proc wstandend *(PWindow): cint {.nodecl, importc: "wstandend ".};# generated
-proc wsyncdown *(PWindow): void {.nodecl, importc: "wsyncdown ".};# implemented
-proc wsyncup *(PWindow): void {.nodecl, importc: "wsyncup ".};# implemented
-proc wtimeout *(PWindow,cint): void {.nodecl, importc: "wtimeout ".};# implemented
-proc wtouchln *(PWindow,cint,cint,cint): cint {.nodecl, importc: "wtouchln ".};# implemented
-proc wvline *(PWindow,TChtype,cint): cint {.nodecl, importc: "wvline ".};# implemented
+proc wscrl *(PWindow,cint): cint {.nodecl, importc:"wscrl".}# implemented
+proc wsetscrreg *(PWindow; a, b: cint): cint {.nodecl, importc:"wsetscrreg".}# implemented
+proc wstandout *(PWindow): cint {.nodecl, importc:"wstandout".}# generated
+proc wstandend *(PWindow): cint {.nodecl, importc:"wstandend".}# generated
+proc wsyncdown *(PWindow) {.nodecl, importc:"wsyncdown".}# implemented
+proc wsyncup *(PWindow) {.nodecl, importc:"wsyncup".}# implemented
+proc wtimeout *(PWindow; cint) {.nodecl, importc:"wtimeout".}# implemented
+proc wtouchln *(PWindow; a, b, c: cint): cint {.nodecl, importc:"wtouchln".}# implemented
+proc wvline *(PWindow,TChtype,cint): cint {.nodecl, importc:"wvline".}# implemented
 
 # }}}
 
 # These are also declared in <term.h>:
-proc tigetflag (const cstring): int {.nodecl, importc: "tigetflag".};        # implemented
-proc tigetnum (const cstring): int {.nodecl, importc: "tigetnum".};         # implemented
-proc tigetstr (const cstring): cstring {.nodecl, importc: "tigetstr".}; # implemented
-proc putp (const cstring): int {.nodecl, importc: "putp".};             # implemented
+proc tigetflag (cstring): int {.nodecl, importc: "tigetflag".}   # implemented
+proc tigetnum (cstring): int {.nodecl, importc: "tigetnum".}     # implemented
+proc tigetstr (cstring): cstring {.nodecl, importc: "tigetstr".} # implemented
+proc putp (cstring): int {.nodecl, importc: "putp".}             # implemented
 
 #if NCURSES_TPARM_VARARGS
 # TODO extern NCURSES_EXPORT(char *) tparm (NCURSES_CONST char *, ...);	/* special */
@@ -862,50 +869,51 @@ proc putp (const cstring): int {.nodecl, importc: "putp".};             # implem
 
 # These functions are extensions - not in X/Open Curses.
 const
-  ExtFuncs* 20110404
+  ExtFuncs* = 20110404
 
 # TODO typedef int (*NCURSES_WINDOW_CB)(WINDOW *, void *);
 # TODO typedef int (*NCURSES_SCREEN_CB)(SCREEN *, void *);
 
-proc is_term_resized *(int, int): bool {.nodecl, importc: "is_term_resized ".};
-proc keybound *(int, int): cstring {.nodecl, importc: "keybound ".};
-proc curses_version : const cstring{.nodecl, importc: "curses_version ".};
-proc assume_default_colors *(int, int): int {.nodecl, importc: "assume_default_colors ".};
-proc define_key *(const cstring, int): int {.nodecl, importc: "define_key ".};
-proc get_escdelay : int {.nodecl, importc: "get_escdelay ".};
-proc key_defined *(const cstring): int {.nodecl, importc: "key_defined ".};
-proc keyok *(int, bool): int {.nodecl, importc: "keyok ".};
-proc resize_term *(int, int): int {.nodecl, importc: "resize_term ".};
-proc resizeterm *(int, int): int {.nodecl, importc: "resizeterm ".};
-proc set_escdelay *(int): int {.nodecl, importc: "set_escdelay ".};
-proc set_tabsize *(int): int {.nodecl, importc: "set_tabsize ".};
-proc use_default_colors : int {.nodecl, importc: "use_default_colors ".};
-proc use_extended_names *(bool): int {.nodecl, importc: "use_extended_names ".};
-proc use_legacy_coding *(int): int {.nodecl, importc: "use_legacy_coding ".};
+proc is_term_resized *(a, b: int): bool {.nodecl, importc:"is_term_resized".}
+proc keybound *(a, b: int): cstring {.nodecl, importc:"keybound".}
+proc curses_version : cstring{.nodecl, importc:"curses_version".}
+proc assume_default_colors *(a, b: int): int {.nodecl, importc:"assume_default_colors".}
+proc define_key *(cstring, int): int {.nodecl, importc:"define_key".}
+proc get_escdelay : int {.nodecl, importc:"get_escdelay".}
+proc key_defined *(cstring): int {.nodecl, importc:"key_defined".}
+proc keyok *(int, bool): int {.nodecl, importc:"keyok".}
+proc resize_term *(a, b: int): int {.nodecl, importc:"resize_term".}
+# NB: both of these are the same symbol to nimrod
+# proc resizeterm *(a, b: int): int {.nodecl, importc:"resizeterm".}
+proc set_escdelay *(int): int {.nodecl, importc:"set_escdelay".}
+proc set_tabsize *(int): int {.nodecl, importc:"set_tabsize".}
+proc use_default_colors : int {.nodecl, importc:"use_default_colors".}
+proc use_extended_names *(bool): int {.nodecl, importc:"use_extended_names".}
+proc use_legacy_coding *(int): int {.nodecl, importc:"use_legacy_coding".}
 
 # TODO extern NCURSES_EXPORT(int) use_screen (SCREEN *, NCURSES_SCREEN_CB, void *);
 # TODO extern NCURSES_EXPORT(int) use_window (WINDOW *, NCURSES_WINDOW_CB, void *);
 
-proc wresize*(PWindow, int, int): int {.nodecl, importc: "wresize".};
-proc nofilter*(void) {.nodecl, importc: "nofilter".};
+proc wresize*(PWindow; a, b: int): int {.nodecl, importc: "wresize".}
+proc nofilter*() {.nodecl, importc: "nofilter".}
 
 # These extensions provide access to information stored in the WINDOW even
 # when NCURSES_OPAQUE is set:
 
-proc wgetparent *(const PWindow): PWindow {.nodecl, importc: "wgetparent ".};                 # generated
-proc is_cleared *(const PWindow): bool {.nodecl, importc: "is_cleared ".};                    # generated
-proc is_idcok *(const PWindow): bool {.nodecl, importc: "is_idcok ".};                        # generated
-proc is_idlok *(const PWindow): bool {.nodecl, importc: "is_idlok ".};                        # generated
-proc is_immedok *(const PWindow): bool {.nodecl, importc: "is_immedok ".};                    # generated
-proc is_keypad *(const PWindow): bool {.nodecl, importc: "is_keypad ".};                      # generated
-proc is_leaveok *(const PWindow): bool {.nodecl, importc: "is_leaveok ".};                    # generated
-proc is_nodelay *(const PWindow): bool {.nodecl, importc: "is_nodelay ".};                    # generated
-proc is_notimeout *(const PWindow): bool {.nodecl, importc: "is_notimeout ".};                # generated
-proc is_pad *(const PWindow): bool {.nodecl, importc: "is_pad ".};                            # generated
-proc is_scrollok *(const PWindow): bool {.nodecl, importc: "is_scrollok ".};                  # generated
-proc is_subwin *(const PWindow): bool {.nodecl, importc: "is_subwin ".};                      # generated
-proc is_syncok *(const PWindow): bool {.nodecl, importc: "is_syncok ".};                      # generated
-proc wgetscrreg *(const PWindow, ptr cint, ptr cint): int {.nodecl, importc: "wgetscrreg ".}; # generated
+proc wgetparent *(PWindow): PWindow {.nodecl, importc: "wgetparent ".}                 # generated
+proc is_cleared *(PWindow): bool {.nodecl, importc: "is_cleared ".}                    # generated
+proc is_idcok *(PWindow): bool {.nodecl, importc: "is_idcok ".}                        # generated
+proc is_idlok *(PWindow): bool {.nodecl, importc: "is_idlok ".}                        # generated
+proc is_immedok *(PWindow): bool {.nodecl, importc: "is_immedok ".}                    # generated
+proc is_keypad *(PWindow): bool {.nodecl, importc: "is_keypad ".}                      # generated
+proc is_leaveok *(PWindow): bool {.nodecl, importc: "is_leaveok ".}                    # generated
+proc is_nodelay *(PWindow): bool {.nodecl, importc: "is_nodelay ".}                    # generated
+proc is_notimeout *(PWindow): bool {.nodecl, importc: "is_notimeout ".}                # generated
+proc is_pad *(PWindow): bool {.nodecl, importc: "is_pad ".}                            # generated
+proc is_scrollok *(PWindow): bool {.nodecl, importc: "is_scrollok ".}                  # generated
+proc is_subwin *(PWindow): bool {.nodecl, importc: "is_subwin ".}                      # generated
+proc is_syncok *(PWindow): bool {.nodecl, importc: "is_syncok ".}                      # generated
+proc wgetscrreg *(PWindow; a, b: ptr cint): int {.nodecl, importc: "wgetscrreg ".} # generated
 
 #else
 template CursesVersion*() = Version
@@ -1028,28 +1036,29 @@ template CursesVersion*() = Version
 const
   AttrShift = 8
 
-template Bits(mask,shift) ((mask) shl ((shift) + AttrShift))
+proc Bits(mask, shift: int): int {.noSideEffect, compileTime.} =
+  ((mask) shl (shift + AttrShift))
 
 const
-  A_NORMAL     * = (culong(1) - culong(1))
-  A_ATTRIBUTES * = BITS(~(culong(1) - culong(1)),0)
-  A_CHARTEXT   * = (BITS(culong(1),0) - culong(1))
-  A_COLOR      * = BITS(((culong(1)) << 8) - culong(1),0)
-  A_STANDOUT   * = BITS(culong(1),8)
-  A_UNDERLINE  * = BITS(culong(1),9)
-  A_REVERSE    * = BITS(culong(1),10)
-  A_BLINK      * = BITS(culong(1),11)
-  A_DIM        * = BITS(culong(1),12)
-  A_BOLD       * = BITS(culong(1),13)
-  A_ALTCHARSET * = BITS(culong(1),14)
-  A_INVIS      * = BITS(culong(1),15)
-  A_PROTECT    * = BITS(culong(1),16)
-  A_HORIZONTAL * = BITS(culong(1),17)
-  A_LEFT       * = BITS(culong(1),18)
-  A_LOW        * = BITS(culong(1),19)
-  A_RIGHT      * = BITS(culong(1),20)
-  A_TOP        * = BITS(culong(1),21)
-  A_VERTICAL   * = BITS(culong(1),22)
+  A_NORMAL     * = (1 - 1)
+  A_ATTRIBUTES * = BITS((not 1) - 1,0)
+  A_CHARTEXT   * = (BITS(1,0) - 1)
+  A_COLOR      * = BITS(((1) shl 8) - 1,0)
+  A_STANDOUT   * = BITS(1,8)
+  A_UNDERLINE  * = BITS(1,9)
+  A_REVERSE    * = BITS(1,10)
+  A_BLINK      * = BITS(1,11)
+  A_DIM        * = BITS(1,12)
+  A_BOLD       * = BITS(1,13)
+  A_ALTCHARSET * = BITS(1,14)
+  A_INVIS      * = BITS(1,15)
+  A_PROTECT    * = BITS(1,16)
+  A_HORIZONTAL * = BITS(1,17)
+  A_LEFT       * = BITS(1,18)
+  A_LOW        * = BITS(1,19)
+  A_RIGHT      * = BITS(1,20)
+  A_TOP        * = BITS(1,21)
+  A_VERTICAL   * = BITS(1,22)
 
 # Most of the pseudo functions are macros that either provide compatibility
 # with older versions of curses, or provide inline functionality to improve
@@ -1166,165 +1175,165 @@ const
 
 # NB: Probably not going to bind these without a good reason {{{
 
-# pseudo functions for standard screen
-
-#define addch(ch)		waddch(stdscr,ch)
-#define addchnstr(str,n)	waddchnstr(stdscr,str,n)
-#define addchstr(str)		waddchstr(stdscr,str)
-#define addnstr(str,n)		waddnstr(stdscr,str,n)
-#define addstr(str)		waddnstr(stdscr,str,-1)
-#define attroff(at)		wattroff(stdscr,at)
-#define attron(at)		wattron(stdscr,at)
-#define attrset(at)		wattrset(stdscr,at)
-#define attr_get(ap,cp,o)	wattr_get(stdscr,ap,cp,o)
-#define attr_off(a,o)		wattr_off(stdscr,a,o)
-#define attr_on(a,o)		wattr_on(stdscr,a,o)
-#define attr_set(a,c,o)		wattr_set(stdscr,a,c,o)
-#define bkgd(ch)		wbkgd(stdscr,ch)
-#define bkgdset(ch)		wbkgdset(stdscr,ch)
-#define chgat(n,a,c,o)		wchgat(stdscr,n,a,c,o)
-#define clear()			wclear(stdscr)
-#define clrtobot()		wclrtobot(stdscr)
-#define clrtoeol()		wclrtoeol(stdscr)
-#define color_set(c,o)		wcolor_set(stdscr,c,o)
-#define delch()			wdelch(stdscr)
-#define deleteln()		winsdelln(stdscr,-1)
-#define echochar(c)		wechochar(stdscr,c)
-#define erase()			werase(stdscr)
-#define getch()			wgetch(stdscr)
-#define getstr(str)		wgetstr(stdscr,str)
-#define inch()			winch(stdscr)
-#define inchnstr(s,n)		winchnstr(stdscr,s,n)
-#define inchstr(s)		winchstr(stdscr,s)
-#define innstr(s,n)		winnstr(stdscr,s,n)
-#define insch(c)		winsch(stdscr,c)
-#define insdelln(n)		winsdelln(stdscr,n)
-#define insertln()		winsdelln(stdscr,1)
-#define insnstr(s,n)		winsnstr(stdscr,s,n)
-#define insstr(s)		winsstr(stdscr,s)
-#define instr(s)		winstr(stdscr,s)
-#define move(y,x)		wmove(stdscr,y,x)
-#define refresh()		wrefresh(stdscr)
-#define scrl(n)			wscrl(stdscr,n)
-#define setscrreg(t,b)		wsetscrreg(stdscr,t,b)
-#define standend()		wstandend(stdscr)
-#define standout()		wstandout(stdscr)
-#define timeout(delay)		wtimeout(stdscr,delay)
-#define wdeleteln(win)		winsdelln(win,-1)
-#define winsertln(win)		winsdelln(win,1)
-
-/*
- * mv functions
- */
-
-#define mvwaddch(win,y,x,ch)		(wmove(win,y,x) == ERR ? ERR : waddch(win,ch))
-#define mvwaddchnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : waddchnstr(win,str,n))
-#define mvwaddchstr(win,y,x,str)	(wmove(win,y,x) == ERR ? ERR : waddchnstr(win,str,-1))
-#define mvwaddnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : waddnstr(win,str,n))
-#define mvwaddstr(win,y,x,str)		(wmove(win,y,x) == ERR ? ERR : waddnstr(win,str,-1))
-#define mvwdelch(win,y,x)		(wmove(win,y,x) == ERR ? ERR : wdelch(win))
-#define mvwchgat(win,y,x,n,a,c,o)	(wmove(win,y,x) == ERR ? ERR : wchgat(win,n,a,c,o))
-#define mvwgetch(win,y,x)		(wmove(win,y,x) == ERR ? ERR : wgetch(win))
-#define mvwgetnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : wgetnstr(win,str,n))
-#define mvwgetstr(win,y,x,str)		(wmove(win,y,x) == ERR ? ERR : wgetstr(win,str))
-#define mvwhline(win,y,x,c,n)		(wmove(win,y,x) == ERR ? ERR : whline(win,c,n))
-#define mvwinch(win,y,x)		(wmove(win,y,x) == ERR ? NCURSES_CAST(chtype, ERR) : winch(win))
-#define mvwinchnstr(win,y,x,s,n)	(wmove(win,y,x) == ERR ? ERR : winchnstr(win,s,n))
-#define mvwinchstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winchstr(win,s))
-#define mvwinnstr(win,y,x,s,n)		(wmove(win,y,x) == ERR ? ERR : winnstr(win,s,n))
-#define mvwinsch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : winsch(win,c))
-#define mvwinsnstr(win,y,x,s,n)		(wmove(win,y,x) == ERR ? ERR : winsnstr(win,s,n))
-#define mvwinsstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winsstr(win,s))
-#define mvwinstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winstr(win,s))
-#define mvwvline(win,y,x,c,n)		(wmove(win,y,x) == ERR ? ERR : wvline(win,c,n))
-
-#define mvaddch(y,x,ch)			mvwaddch(stdscr,y,x,ch)
-#define mvaddchnstr(y,x,str,n)		mvwaddchnstr(stdscr,y,x,str,n)
-#define mvaddchstr(y,x,str)		mvwaddchstr(stdscr,y,x,str)
-#define mvaddnstr(y,x,str,n)		mvwaddnstr(stdscr,y,x,str,n)
-#define mvaddstr(y,x,str)		mvwaddstr(stdscr,y,x,str)
-#define mvchgat(y,x,n,a,c,o)		mvwchgat(stdscr,y,x,n,a,c,o)
-#define mvdelch(y,x)			mvwdelch(stdscr,y,x)
-#define mvgetch(y,x)			mvwgetch(stdscr,y,x)
-#define mvgetnstr(y,x,str,n)		mvwgetnstr(stdscr,y,x,str,n)
-#define mvgetstr(y,x,str)		mvwgetstr(stdscr,y,x,str)
-#define mvhline(y,x,c,n)		mvwhline(stdscr,y,x,c,n)
-#define mvinch(y,x)			mvwinch(stdscr,y,x)
-#define mvinchnstr(y,x,s,n)		mvwinchnstr(stdscr,y,x,s,n)
-#define mvinchstr(y,x,s)		mvwinchstr(stdscr,y,x,s)
-#define mvinnstr(y,x,s,n)		mvwinnstr(stdscr,y,x,s,n)
-#define mvinsch(y,x,c)			mvwinsch(stdscr,y,x,c)
-#define mvinsnstr(y,x,s,n)		mvwinsnstr(stdscr,y,x,s,n)
-#define mvinsstr(y,x,s)			mvwinsstr(stdscr,y,x,s)
-#define mvinstr(y,x,s)			mvwinstr(stdscr,y,x,s)
-#define mvvline(y,x,c,n)		mvwvline(stdscr,y,x,c,n)
-
-/*
- * Some wide-character functions can be implemented without the extensions.
- */
-#if !NCURSES_OPAQUE
-#define getbkgd(win)                    ((win)->_bkgd)
-#endif /* NCURSES_OPAQUE */
-
-#define slk_attr_off(a,v)		((v) ? ERR : slk_attroff(a))
-#define slk_attr_on(a,v)		((v) ? ERR : slk_attron(a))
-
-#if !NCURSES_OPAQUE
-#if defined(NCURSES_WIDECHAR) && 0
-#define wattr_set(win,a,p,opts)		((win)->_attrs = ((a) & ~A_COLOR), \
-					 (win)->_color = (p), \
-					 OK)
-#define wattr_get(win,a,p,opts)		((void)((a) != (void *)0 && (*(a) = (win)->_attrs)), \
-					 (void)((p) != (void *)0 && (*(p) = (short)(win)->_color)), \
-					 OK)
-#else
-#define wattr_set(win,a,p,opts)		((win)->_attrs = (((a) & ~A_COLOR) | (attr_t)COLOR_PAIR(p)), OK)
-#define wattr_get(win,a,p,opts)		((void)((a) != (void *)0 && (*(a) = (win)->_attrs)), \
-					 (void)((p) != (void *)0 && (*(p) = (short)PAIR_NUMBER((win)->_attrs))), \
-					 OK)
-#endif
-#endif /* NCURSES_OPAQUE */
-
-/*
- * X/Open curses deprecates SVr4 vwprintw/vwscanw, which are supposed to use
- * varargs.h.  It adds new calls vw_printw/vw_scanw, which are supposed to
- * use POSIX stdarg.h.  The ncurses versions of vwprintw/vwscanw already
- * use stdarg.h, so...
- */
-#define vw_printw		vwprintw
-#define vw_scanw		vwscanw
-
-/*
- * Export fallback function for use in C++ binding.
- */
-#if !1
-#define vsscanf(a,b,c) _nc_vsscanf(a,b,c)
-NCURSES_EXPORT(int) vsscanf(const char *, const char *, va_list);
-#endif
-
-/*
- * These macros are extensions - not in X/Open Curses.
- */
-#if 1
-#if !NCURSES_OPAQUE
-#define is_cleared(win)		((win) ? (win)->_clear : FALSE)
-#define is_idcok(win)		((win) ? (win)->_idcok : FALSE)
-#define is_idlok(win)		((win) ? (win)->_idlok : FALSE)
-#define is_immedok(win)		((win) ? (win)->_immed : FALSE)
-#define is_keypad(win)		((win) ? (win)->_use_keypad : FALSE)
-#define is_leaveok(win)		((win) ? (win)->_leaveok : FALSE)
-#define is_nodelay(win)		((win) ? ((win)->_delay == 0) : FALSE)
-#define is_notimeout(win)	((win) ? (win)->_notimeout : FALSE)
-#define is_pad(win)		((win) ? ((win)->_flags & _ISPAD) != 0 : FALSE)
-#define is_scrollok(win)	((win) ? (win)->_scroll : FALSE)
-#define is_subwin(win)		((win) ? ((win)->_flags & _SUBWIN) != 0 : FALSE)
-#define is_syncok(win)		((win) ? (win)->_sync : FALSE)
-#define wgetparent(win)		((win) ? (win)->_parent : 0)
-#define wgetscrreg(win,t,b)	((win) ? (*(t) = (win)->_regtop, *(b) = (win)->_regbottom, OK) : ERR)
-#endif
-#endif
-
-#endif /* NCURSES_NOMACROS */
+## pseudo functions for standard screen
+#
+##define addch(ch)		waddch(stdscr,ch)
+##define addchnstr(str,n)	waddchnstr(stdscr,str,n)
+##define addchstr(str)		waddchstr(stdscr,str)
+##define addnstr(str,n)		waddnstr(stdscr,str,n)
+##define addstr(str)		waddnstr(stdscr,str,-1)
+##define attroff(at)		wattroff(stdscr,at)
+##define attron(at)		wattron(stdscr,at)
+##define attrset(at)		wattrset(stdscr,at)
+##define attr_get(ap,cp,o)	wattr_get(stdscr,ap,cp,o)
+##define attr_off(a,o)		wattr_off(stdscr,a,o)
+##define attr_on(a,o)		wattr_on(stdscr,a,o)
+##define attr_set(a,c,o)		wattr_set(stdscr,a,c,o)
+##define bkgd(ch)		wbkgd(stdscr,ch)
+##define bkgdset(ch)		wbkgdset(stdscr,ch)
+##define chgat(n,a,c,o)		wchgat(stdscr,n,a,c,o)
+##define clear()			wclear(stdscr)
+##define clrtobot()		wclrtobot(stdscr)
+##define clrtoeol()		wclrtoeol(stdscr)
+##define color_set(c,o)		wcolor_set(stdscr,c,o)
+##define delch()			wdelch(stdscr)
+##define deleteln()		winsdelln(stdscr,-1)
+##define echochar(c)		wechochar(stdscr,c)
+##define erase()			werase(stdscr)
+##define getch()			wgetch(stdscr)
+##define getstr(str)		wgetstr(stdscr,str)
+##define inch()			winch(stdscr)
+##define inchnstr(s,n)		winchnstr(stdscr,s,n)
+##define inchstr(s)		winchstr(stdscr,s)
+##define innstr(s,n)		winnstr(stdscr,s,n)
+##define insch(c)		winsch(stdscr,c)
+##define insdelln(n)		winsdelln(stdscr,n)
+##define insertln()		winsdelln(stdscr,1)
+##define insnstr(s,n)		winsnstr(stdscr,s,n)
+##define insstr(s)		winsstr(stdscr,s)
+##define instr(s)		winstr(stdscr,s)
+##define move(y,x)		wmove(stdscr,y,x)
+##define refresh()		wrefresh(stdscr)
+##define scrl(n)			wscrl(stdscr,n)
+##define setscrreg(t,b)		wsetscrreg(stdscr,t,b)
+##define standend()		wstandend(stdscr)
+##define standout()		wstandout(stdscr)
+##define timeout(delay)		wtimeout(stdscr,delay)
+##define wdeleteln(win)		winsdelln(win,-1)
+##define winsertln(win)		winsdelln(win,1)
+#
+#/*
+# * mv functions
+# */
+#
+##define mvwaddch(win,y,x,ch)		(wmove(win,y,x) == ERR ? ERR : waddch(win,ch))
+##define mvwaddchnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : waddchnstr(win,str,n))
+##define mvwaddchstr(win,y,x,str)	(wmove(win,y,x) == ERR ? ERR : waddchnstr(win,str,-1))
+##define mvwaddnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : waddnstr(win,str,n))
+##define mvwaddstr(win,y,x,str)		(wmove(win,y,x) == ERR ? ERR : waddnstr(win,str,-1))
+##define mvwdelch(win,y,x)		(wmove(win,y,x) == ERR ? ERR : wdelch(win))
+##define mvwchgat(win,y,x,n,a,c,o)	(wmove(win,y,x) == ERR ? ERR : wchgat(win,n,a,c,o))
+##define mvwgetch(win,y,x)		(wmove(win,y,x) == ERR ? ERR : wgetch(win))
+##define mvwgetnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : wgetnstr(win,str,n))
+##define mvwgetstr(win,y,x,str)		(wmove(win,y,x) == ERR ? ERR : wgetstr(win,str))
+##define mvwhline(win,y,x,c,n)		(wmove(win,y,x) == ERR ? ERR : whline(win,c,n))
+##define mvwinch(win,y,x)		(wmove(win,y,x) == ERR ? NCURSES_CAST(chtype, ERR) : winch(win))
+##define mvwinchnstr(win,y,x,s,n)	(wmove(win,y,x) == ERR ? ERR : winchnstr(win,s,n))
+##define mvwinchstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winchstr(win,s))
+##define mvwinnstr(win,y,x,s,n)		(wmove(win,y,x) == ERR ? ERR : winnstr(win,s,n))
+##define mvwinsch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : winsch(win,c))
+##define mvwinsnstr(win,y,x,s,n)		(wmove(win,y,x) == ERR ? ERR : winsnstr(win,s,n))
+##define mvwinsstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winsstr(win,s))
+##define mvwinstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winstr(win,s))
+##define mvwvline(win,y,x,c,n)		(wmove(win,y,x) == ERR ? ERR : wvline(win,c,n))
+#
+##define mvaddch(y,x,ch)			mvwaddch(stdscr,y,x,ch)
+##define mvaddchnstr(y,x,str,n)		mvwaddchnstr(stdscr,y,x,str,n)
+##define mvaddchstr(y,x,str)		mvwaddchstr(stdscr,y,x,str)
+##define mvaddnstr(y,x,str,n)		mvwaddnstr(stdscr,y,x,str,n)
+##define mvaddstr(y,x,str)		mvwaddstr(stdscr,y,x,str)
+##define mvchgat(y,x,n,a,c,o)		mvwchgat(stdscr,y,x,n,a,c,o)
+##define mvdelch(y,x)			mvwdelch(stdscr,y,x)
+##define mvgetch(y,x)			mvwgetch(stdscr,y,x)
+##define mvgetnstr(y,x,str,n)		mvwgetnstr(stdscr,y,x,str,n)
+##define mvgetstr(y,x,str)		mvwgetstr(stdscr,y,x,str)
+##define mvhline(y,x,c,n)		mvwhline(stdscr,y,x,c,n)
+##define mvinch(y,x)			mvwinch(stdscr,y,x)
+##define mvinchnstr(y,x,s,n)		mvwinchnstr(stdscr,y,x,s,n)
+##define mvinchstr(y,x,s)		mvwinchstr(stdscr,y,x,s)
+##define mvinnstr(y,x,s,n)		mvwinnstr(stdscr,y,x,s,n)
+##define mvinsch(y,x,c)			mvwinsch(stdscr,y,x,c)
+##define mvinsnstr(y,x,s,n)		mvwinsnstr(stdscr,y,x,s,n)
+##define mvinsstr(y,x,s)			mvwinsstr(stdscr,y,x,s)
+##define mvinstr(y,x,s)			mvwinstr(stdscr,y,x,s)
+##define mvvline(y,x,c,n)		mvwvline(stdscr,y,x,c,n)
+#
+#/*
+# * Some wide-character functions can be implemented without the extensions.
+# */
+##if !NCURSES_OPAQUE
+##define getbkgd(win)                    ((win)->_bkgd)
+##endif /* NCURSES_OPAQUE */
+#
+##define slk_attr_off(a,v)		((v) ? ERR : slk_attroff(a))
+##define slk_attr_on(a,v)		((v) ? ERR : slk_attron(a))
+#
+##if !NCURSES_OPAQUE
+##if defined(NCURSES_WIDECHAR) && 0
+##define wattr_set(win,a,p,opts)		((win)->_attrs = ((a) & ~A_COLOR), \
+#					 (win)->_color = (p), \
+#					 OK)
+##define wattr_get(win,a,p,opts)		((void)((a) != (void *)0 && (*(a) = (win)->_attrs)), \
+#					 (void)((p) != (void *)0 && (*(p) = (short)(win)->_color)), \
+#					 OK)
+##else
+##define wattr_set(win,a,p,opts)		((win)->_attrs = (((a) & ~A_COLOR) | (attr_t)COLOR_PAIR(p)), OK)
+##define wattr_get(win,a,p,opts)		((void)((a) != (void *)0 && (*(a) = (win)->_attrs)), \
+#					 (void)((p) != (void *)0 && (*(p) = (short)PAIR_NUMBER((win)->_attrs))), \
+#					 OK)
+##endif
+##endif /* NCURSES_OPAQUE */
+#
+#/*
+# * X/Open curses deprecates SVr4 vwprintw/vwscanw, which are supposed to use
+# * varargs.h.  It adds new calls vw_printw/vw_scanw, which are supposed to
+# * use POSIX stdarg.h.  The ncurses versions of vwprintw/vwscanw already
+# * use stdarg.h, so...
+# */
+##define vw_printw		vwprintw
+##define vw_scanw		vwscanw
+#
+#/*
+# * Export fallback function for use in C++ binding.
+# */
+##if !1
+##define vsscanf(a,b,c) _nc_vsscanf(a,b,c)
+#NCURSES_EXPORT(int) vsscanf(const char *, const char *, va_list);
+##endif
+#
+#/*
+# * These macros are extensions - not in X/Open Curses.
+# */
+##if 1
+##if !NCURSES_OPAQUE
+##define is_cleared(win)		((win) ? (win)->_clear : FALSE)
+##define is_idcok(win)		((win) ? (win)->_idcok : FALSE)
+##define is_idlok(win)		((win) ? (win)->_idlok : FALSE)
+##define is_immedok(win)		((win) ? (win)->_immed : FALSE)
+##define is_keypad(win)		((win) ? (win)->_use_keypad : FALSE)
+##define is_leaveok(win)		((win) ? (win)->_leaveok : FALSE)
+##define is_nodelay(win)		((win) ? ((win)->_delay == 0) : FALSE)
+##define is_notimeout(win)	((win) ? (win)->_notimeout : FALSE)
+##define is_pad(win)		((win) ? ((win)->_flags & _ISPAD) != 0 : FALSE)
+##define is_scrollok(win)	((win) ? (win)->_scroll : FALSE)
+##define is_subwin(win)		((win) ? ((win)->_flags & _SUBWIN) != 0 : FALSE)
+##define is_syncok(win)		((win) ? (win)->_sync : FALSE)
+##define wgetparent(win)		((win) ? (win)->_parent : 0)
+##define wgetscrreg(win,t,b)	((win) ? (*(t) = (win)->_regtop, *(b) = (win)->_regbottom, OK) : ERR)
+##endif
+##endif
+#
+##endif /* NCURSES_NOMACROS */
 
 # }}}
 
@@ -1361,16 +1370,16 @@ NCURSES_EXPORT(int) vsscanf(const char *, const char *, va_list);
 #
 ##else
 
-var curscr      * : PWindow {.nodecl, importc: "curscr".}
-var newscr      * : PWindow {.nodecl, importc: "newscr".}
-var stdscr      * : PWindow {.nodecl, importc: "stdscr".}
-var ttytype     * : cstring[] {.nodecl, importc: "ttytype".}
-var COLORS      * : int {.nodecl, importc: "COLORS".}
-var COLOR_PAIRS * : int {.nodecl, importc: "COLOR_PAIRS".}
-var COLS        * : int {.nodecl, importc: "COLS".}
-var ESCDELAY    * : int {.nodecl, importc: "ESCDELAY".}
-var LINES       * : int {.nodecl, importc: "LINES".}
-var TABSIZE     * : int {.nodecl, importc: "TABSIZE".}
+var curscr      * {.nodecl, importc: "curscr".} : PWindow
+var newscr      * {.nodecl, importc: "newscr".} : PWindow
+var stdscr      * {.nodecl, importc: "stdscr".} : PWindow
+var ttytype     * {.nodecl, importc: "ttytype".} : array[0..10000,cstring]
+var COLORS      * {.nodecl, importc: "COLORS".} : int
+var COLOR_PAIRS * {.nodecl, importc: "COLOR_PAIRS".} : int
+var COLS        * {.nodecl, importc: "COLS".} : int
+var ESCDELAY    * {.nodecl, importc: "ESCDELAY".} : int
+var LINES       * {.nodecl, importc: "LINES".} : int
+var TABSIZE     * {.nodecl, importc: "TABSIZE".} : int
 
 ##endif
 
@@ -1402,9 +1411,11 @@ const
   KEY_BACKSPACE = 0407 # backspace key
 
   KEY_F0 = 0410       # Function keys.  Space for 64
-  template KEY_F(n) = # Value of function key n
-    (KEY_F0+(n))
 
+template KEY_F(n) = # Value of function key n
+  (KEY_F0+(n))
+
+const
   KEY_DL        = 0510 # delete-line key
   KEY_IL        = 0511 # insert-line key
   KEY_DC        = 0512 # delete-character key
